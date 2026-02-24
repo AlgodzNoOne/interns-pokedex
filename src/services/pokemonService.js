@@ -77,7 +77,6 @@ const formatPokemonData = (pokemon, species = null) => {
   };
 };
 
-
 export const getPokemonDetails = async (nameOrId) => {
   // Get basic Pokemon data
   const pokemon = await pokemonRepository.getPokemonByNameOrId(nameOrId);
@@ -159,14 +158,16 @@ export const searchPokemon = async (query) => {
 export const getPokemonTypes = async () => {
   const types = await pokemonRepository.getPokemonTypes();
 
-  return types
-    // Remove special types
-    .filter((t) => t.name !== 'unknown' && t.name !== 'shadow')
-    // Format for display
-    .map((t) => ({
-      name: t.name,
-      displayName: formatName(t.name)
-    }));
+  return (
+    types
+      // Remove special types
+      .filter((t) => t.name !== 'unknown' && t.name !== 'shadow')
+      // Format for display
+      .map((t) => ({
+        name: t.name,
+        displayName: formatName(t.name)
+      }))
+  );
 };
 
 export const getPokemonByType = async (
@@ -201,10 +202,3 @@ export const getPokemonByType = async (
     hasPrevPage: page > 1
   };
 };
-
-
-const pokemonWithDetails = await Promise.all(
-  data.results.map(async (pokemon) => {
-    return getPokemonDetails(pokemon.name);
-  })
-);

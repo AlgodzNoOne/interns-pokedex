@@ -19,7 +19,6 @@ router.get('/type/:type', pokemonController.getPokemonByType);
 // Pokemon detail page
 router.get('/pokemon/:nameOrId', pokemonController.getPokemonDetails);
 
-
 // ============================================
 // API ROUTES (Return JSON)
 // ============================================

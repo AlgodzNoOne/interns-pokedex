@@ -1,3 +1,5 @@
+import * as pokemonService from '../services/pokemonService.js';
+
 // ============================================
 // VIEW CONTROLLERS (Return HTML via EJS)
 // ============================================
@@ -197,11 +199,3 @@ export const apiGetPokemonByType = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
-req.params    // URL parameters: /pokemon/:nameOrId → { nameOrId: "pikachu" }
-req.query     // Query string: ?page=2 → { page: "2" }
-
-res.render('template', { data });  // Render HTML
-res.json({ data });                // Send JSON
-res.status(404).render('error');   // Set status + render
-
