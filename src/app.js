@@ -1,42 +1,77 @@
 import express from 'express';
-import path from 'path';
-import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { config } from './config/index.js';
 import routes from './routes/index.js';
 
-// Load environment variables
-dotenv.config();
+// ES Modules don't have __dirname by default
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
+// Create Express app
 const app = express();
+const { port: PORT, nodeEnv } = config;
 
-// View engine setup
-app.set('view engine', 'ejs');
-app.set('views', path.join(process.cwd(), 'src', 'views'));
+// ============================================
+// MIDDLEWARE
+// ============================================
 
-// Static assets
-app.use(express.static(path.join(process.cwd(), 'public')));
-app.use(express.urlencoded({ extended: true }));
+// Parse JSON request bodies
 app.use(express.json());
 
-// Mount main router
-app.use(routes);
+// Parse URL-encoded form data
+app.use(express.urlencoded({ extended: true }));
 
-// 404 handler (for both API and views)
+// Serve static files (CSS, images) from public folder
+app.use(express.static(join(__dirname, '../public')));
+
+// ============================================
+// VIEW ENGINE
+// ============================================
+
+// Use EJS as the template engine
+app.set('view engine', 'ejs');
+
+// Set the views directory
+app.set('views', join(__dirname, 'views'));
+
+// ============================================
+// ROUTES
+// ============================================
+
+// Mount all routes
+app.use('/', routes);
+
+// ============================================
+// ERROR HANDLERS
+// ============================================
+
+// 404 - Not Found
 app.use((req, res) => {
-  // prefer HTML by default
-  res.status(404);
-  if (req.accepts('html')) {
-    res.render('error', { message: 'Not Found', error: 'Page not found' });
-  } else {
-    res.json({ success: false, error: 'Not Found' });
-  }
+  res.status(404).render('error', {
+    message: 'Page not found',
+    error: 'The page you are looking for does not exist.'
+  });
 });
 
-// start server when not testing
-if (process.env.NODE_ENV !== 'test') {
-  const port = process.env.PORT || 3000;
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+// 500 - Server Error
+app.use((err, _req, res, _next) => {
+  res.status(500).render('error', {
+    message: 'Something went wrong',
+    error: err.message
+  });
+});
+
+// ============================================
+// START SERVER
+// ============================================
+
+// Only start the server if not in test mode
+if (nodeEnv !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Pokedex server running at http://localhost:${PORT}`);
   });
 }
 
+// Export for testing
 export default app;
