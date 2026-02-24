@@ -1,74 +1,82 @@
 import axios from 'axios';
+import { config } from '../config/index.js';
 
-const BASE_URL = process.env.POKEAPI_BASE_URL || 'https://pokeapi.co/api/v2';
-const DEFAULT_PAGE_LIMIT = Number(process.env.DEFAULT_PAGE_LIMIT) || 20;
-const MAX_SEARCH_LIMIT = Number(process.env.MAX_SEARCH_LIMIT) || 1000;
+const { baseUrl: BASE_URL } = config.pokeapi;
 
-export async function getAllPokemon(limit = DEFAULT_PAGE_LIMIT, offset = 0) {
+export const getAllPokemon = async (limit = 20, offset = 0) => {
   try {
     const response = await axios.get(`${BASE_URL}/pokemon`, {
       params: { limit, offset }
     });
     return response.data;
-  } catch (err) {
-    throw new Error('Failed to fetch Pokemon list');
+  } catch (error) {
+    throw new Error(`Failed to fetch Pokemon list: ${error.message}`);
   }
-}
+};
 
-export async function getPokemonByNameOrId(nameOrId) {
+export const getPokemonByNameOrId = async (nameOrId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/pokemon/${nameOrId}`);
+    const response = await axios.get(`${BASE_URL}/pokemon/${nameOrId.toString().toLowerCase()}`);
     return response.data;
-  } catch (err) {
-    if (err.response && err.response.status === 404) {
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
       return null;
     }
-    throw new Error('Failed to fetch Pokemon');
+    throw new Error(`Failed to fetch Pokemon: ${error.message}`);
   }
-}
+};
 
-export async function getPokemonSpecies(nameOrId) {
+export const getPokemonSpecies = async (nameOrId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/pokemon-species/${nameOrId}`);
+    const response = await axios.get(
+      `${BASE_URL}/pokemon-species/${nameOrId.toString().toLowerCase()}`
+    );
     return response.data;
-  } catch (err) {
-    if (err.response && err.response.status === 404) {
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
       return null;
     }
-    throw err;
+    throw new Error(`Failed to fetch Pokemon species: ${error.message}`);
   }
-}
+};
 
-export async function searchPokemon(query) {
+export const searchPokemon = async (query, limit = config.pagination.maxSearchLimit) => {
   try {
     const response = await axios.get(`${BASE_URL}/pokemon`, {
-      params: { limit: MAX_SEARCH_LIMIT }
+      params: { limit, offset: 0 }
     });
 
-    const results = response.data.results.filter((p) => p.name.includes(query));
-    return { count: results.length, results };
-  } catch (err) {
-    throw new Error('Failed to search Pokemon');
-  }
-}
+    const allPokemon = response.data.results;
+    const filtered = allPokemon.filter((pokemon) =>
+      pokemon.name.toLowerCase().includes(query.toLowerCase())
+    );
 
-export async function getPokemonTypes() {
+    return {
+      count: filtered.length,
+      results: filtered
+    };
+  } catch (error) {
+    throw new Error(`Failed to search Pokemon: ${error.message}`);
+  }
+};
+
+export const getPokemonTypes = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/type`);
     return response.data.results;
-  } catch (err) {
-    throw new Error('Failed to fetch Pokemon types');
+  } catch (error) {
+    throw new Error(`Failed to fetch Pokemon types: ${error.message}`);
   }
-}
+};
 
-export async function getPokemonByType(type) {
+export const getPokemonByType = async (typeName) => {
   try {
-    const response = await axios.get(`${BASE_URL}/type/${type}`);
-    return response.data.pokemon.map((item) => item.pokemon);
-  } catch (err) {
-    if (err.response && err.response.status === 404) {
+    const response = await axios.get(`${BASE_URL}/type/${typeName.toLowerCase()}`);
+    return response.data.pokemon.map((p) => p.pokemon);
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
       return null;
     }
-    throw new Error('Failed to fetch Pokemon by type');
+    throw new Error(`Failed to fetch Pokemon by type: ${error.message}`);
   }
-}
+};
